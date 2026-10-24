@@ -6,7 +6,7 @@ import os
 VIDEO_WIDHT = 1920
 VIDEO_HEIGHT = 1080
 TARGET_FPS = 30.0
-DEVICE_ID = 2 # /dev/video0
+DEVICE_ID = 0 # /dev/video0
 
 # Videos directory
 OUTPUT_DIR = "/home/alpizargregory/sadeas_videos"
@@ -39,7 +39,7 @@ def setup():
     print("Applied parameters -> Resolution: {}x{} | FPS: {}".format(actual_width, actual_height, actual_fps))
 
     # Set video writer (FourCC 'XVID' or 'MJPG' for AVI container)
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    fourcc = cv2.VideoWriter_fourcc(*'MJPG')
     out = cv2.VideoWriter(output_path, fourcc, TARGET_FPS, (VIDEO_WIDHT, VIDEO_HEIGHT))
 
     if not out.isOpened():
