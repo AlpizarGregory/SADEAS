@@ -65,7 +65,7 @@ def start_recording(output_path, cap, out):
         nonlocal stopped
 
         while not stopped:
-            ret.frame = cap.read()
+            ret, frame = cap.read()
             if not ret:
                 stopped = True
                 break
@@ -102,7 +102,7 @@ def start_recording(output_path, cap, out):
     finally:
         stopped = True
         t.join(timeout=1.0)
-        
+
         end_time = time.time()
         duration = end_time - star_time
         cap.release()
