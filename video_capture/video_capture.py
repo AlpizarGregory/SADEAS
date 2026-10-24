@@ -2,6 +2,9 @@ import cv2
 import time
 import os
 
+from threading import Thread
+from queue import Queue, Empty
+
 # Capture parameters
 VIDEO_WIDHT = 1920
 VIDEO_HEIGHT = 1080
@@ -53,24 +56,53 @@ def setup():
 def start_recording(output_path, cap, out):
     print("Starting recording at: {}".format(output_path))
 
+    # Comunication between threads con security limit
+    q = Queue(maxsize=128)
+    stopped = False
+
+    # Producer thread: reads frames from camera without pauses
+    def reader_thread():
+        nonlocal stopped
+
+        while not stopped:
+            ret.frame = cap.read()
+            if not ret:
+                stopped = True
+                break
+
+            # If queue is full, discard oldest frame
+            if q.full():
+                try:
+                    q.get_nowait()
+                except Empty:
+                    pass
+
+            q.put(frame)
+
+    # Start reader_thread
+    t = Thread(target=reader_thread, daemon=True)
+    t.start()
+
     frame_count = 0
     star_time = time.time()
 
     try:
-        while True:
-            ret, frame = cap.read()
+        while not stopped:
+            try:
+                frame = q.get(timeout=0.05)
+                out.write(frame)
+                frame_count += 1
 
-            if not ret:
-                print("Warning: could not read frame")
-                break
-
-            out.write(frame)
-            frame_count += 1
+            except Empty:
+                continue
 
     except Exception:
         print("Stopping recording...")
 
     finally:
+        stopped = True
+        t.join(timeout=1.0)
+        
         end_time = time.time()
         duration = end_time - star_time
         cap.release()
