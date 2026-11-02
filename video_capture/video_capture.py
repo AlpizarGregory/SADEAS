@@ -2,7 +2,6 @@ import subprocess
 import datetime
 import os
 import time
-import signal
 
 # Configuration
 OUTPUT_FOLDER = "/home/alpizargregory/sadeas_videos"
