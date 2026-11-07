@@ -3,44 +3,51 @@ import datetime
 import os
 import time
 
-# Configuration
-OUTPUT_FOLDER = "/home/alpizargregory/sadeas_videos"
-VIDEO_DEVICE = "/dev/video0"
+from gpiozero import LED
 
-VIDEO_WIDTH = 1920
-VIDEO_HEIGHT = 1080
-TARGET_FPS = 30
+from gpio_controller import notify_failure_or_waiting, notify_success
+from constants import (
+    RETRY_DELAY, 
+    VIDEO_DEVICE, 
+    VIDEO_HEIGHT,
+    VIDEO_WIDTH,
+    TARGET_FPS,
+    OUTPUT_FOLDER,
+    SEGMENT_DURATION
+)
 
-SEGMENT_DURATION = 60  # seconds
-RETRY_DELAY = 5        # seconds
 
-
-def record_video(output_folder, duration):
+def record_video():
     """
     Records a video segment using FFmpeg.
     The camera's MJPEG stream is copied without re-encoding.
     """
 
     # Ensure the output directory exists and is writable.
-    if not os.path.isdir(output_folder):
-        print(f"Output directory not found: {output_folder}")
+    if not os.path.isdir(OUTPUT_FOLDER):
+        notify_failure_or_waiting()
+        print(f"Output directory not found: {OUTPUT_FOLDER}")
         time.sleep(RETRY_DELAY)
         return
 
-    if not os.access(output_folder, os.W_OK):
-        print(f"Output directory is not writable: {output_folder}")
+    if not os.access(OUTPUT_FOLDER, os.W_OK):
+        notify_failure_or_waiting()
+        print(f"Output directory is not writable: {OUTPUT_FOLDER}")
         time.sleep(RETRY_DELAY)
         return
 
     if not os.path.exists(VIDEO_DEVICE):
+        notify_failure_or_waiting()
         print(f"Camera not found: {VIDEO_DEVICE}")
         time.sleep(RETRY_DELAY)
         return
 
+    notify_success()
+
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     output_file = os.path.join(
-        output_folder,
+        OUTPUT_FOLDER,
         f"video_{timestamp}.mkv"
     )
 
@@ -53,7 +60,7 @@ def record_video(output_folder, duration):
         "-video_size", f"{VIDEO_WIDTH}x{VIDEO_HEIGHT}",
         "-framerate", str(TARGET_FPS),
         "-i", VIDEO_DEVICE,
-        "-t", str(duration),
+        "-t", str(SEGMENT_DURATION),
         "-map", "0:v:0",
         "-c:v", "copy",
         "-f", "matroska",
@@ -63,7 +70,7 @@ def record_video(output_folder, duration):
     print(f"\nStarting recording: {output_file}")
     print(f"Resolution requested: {VIDEO_WIDTH}x{VIDEO_HEIGHT}")
     print(f"Frame rate requested: {TARGET_FPS} FPS")
-    print(f"Segment duration: {duration} seconds")
+    print(f"Segment duration: {SEGMENT_DURATION} seconds")
 
     try:
         result = subprocess.run(command, check=False)
@@ -82,26 +89,12 @@ def record_video(output_folder, duration):
             print(f"FFmpeg exited with error code {result.returncode}.")
 
     except KeyboardInterrupt:
+        notify_failure_or_waiting()
         print("\nRecording interrupted by user.")
         raise
 
     except OSError as error:
+        notify_failure_or_waiting()
         print(f"Could not execute FFmpeg: {error}")
         time.sleep(RETRY_DELAY)
 
-
-def main():
-    print("SADEAS video capture started.")
-    print("Press Ctrl+C to stop.")
-
-    try:
-        while True:
-            record_video(OUTPUT_FOLDER, SEGMENT_DURATION)
-            time.sleep(1)
-
-    except KeyboardInterrupt:
-        print("\nSADEAS video capture stopped.")
-
-
-if __name__ == "__main__":
-    main()
