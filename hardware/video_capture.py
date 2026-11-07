@@ -17,29 +17,40 @@ from constants import (
 )
 
 
+def hardware_verification():
+    # Ensure the output directory exists and is writable.
+    if not os.path.isdir(OUTPUT_FOLDER):
+        notify_failure_or_waiting()
+        print(f"Output directory not found: {OUTPUT_FOLDER}")
+        time.sleep(RETRY_DELAY)
+        return False
+
+    if not os.access(OUTPUT_FOLDER, os.W_OK):
+        notify_failure_or_waiting()
+        print(f"Output directory is not writable: {OUTPUT_FOLDER}")
+        time.sleep(RETRY_DELAY)
+        return False
+
+    if not os.path.exists(VIDEO_DEVICE):
+        notify_failure_or_waiting()
+        print(f"Camera not found: {VIDEO_DEVICE}")
+        time.sleep(RETRY_DELAY)
+        return False
+
+    notify_success()
+    return True
+
+
+
 def record_video():
     """
     Records a video segment using FFmpeg.
     The camera's MJPEG stream is copied without re-encoding.
     """
 
-    # Ensure the output directory exists and is writable.
-    if not os.path.isdir(OUTPUT_FOLDER):
-        notify_failure_or_waiting()
-        print(f"Output directory not found: {OUTPUT_FOLDER}")
-        time.sleep(RETRY_DELAY)
-        return
+    verification_successfull = hardware_verification()
 
-    if not os.access(OUTPUT_FOLDER, os.W_OK):
-        notify_failure_or_waiting()
-        print(f"Output directory is not writable: {OUTPUT_FOLDER}")
-        time.sleep(RETRY_DELAY)
-        return
-
-    if not os.path.exists(VIDEO_DEVICE):
-        notify_failure_or_waiting()
-        print(f"Camera not found: {VIDEO_DEVICE}")
-        time.sleep(RETRY_DELAY)
+    if not verification_successfull:
         return
 
     notify_success()

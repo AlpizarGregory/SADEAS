@@ -10,3 +10,4 @@ RETRY_DELAY = 5 # seconds
 # Hardware configuration
 PIN_RED_LED = 22
 PIN_GREEN_LED = 27
+PIN_BUTTON = 17
