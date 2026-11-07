@@ -20,7 +20,7 @@ def notify_failure_or_waiting():
 
 
 def notify_start_recording():
-    for _ in range(5):
+    for _ in range(3):
         green_led.on()
         sleep(0.5)
         green_led.off()
